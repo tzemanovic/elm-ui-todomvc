@@ -1,12 +1,12 @@
 port module Main exposing (Entry, Model, Msg(..), emptyModel, init, main, newEntry, setStorage, update, updateWithStorage, view)
 
-{-| TodoMVC implemented in Elm, using plain HTML and CSS for rendering.
+{-| TodoMVC implemented in Elm, using elm-ui for rendering.
 
 This application is broken up into three key parts:
 
 1.  Model - a full definition of the application's state
 2.  Update - a way to step the application state forward
-3.  View - a way to visualize our application state with HTML
+3.  View - a way to visualize our application state with elm-ui
 
 This clean division of concerns is a core part of Elm. You can read more about
 this in <http://guide.elm-lang.org/architecture/index.html>
@@ -16,6 +16,11 @@ this in <http://guide.elm-lang.org/architecture/index.html>
 import Browser
 import Browser.Dom as Dom
 import Element exposing (..)
+import Element.Background as Background
+import Element.Font as Font
+import Element.Region as Region
+import Html exposing (Html)
+import Html.Attributes as HA
 import Json.Decode as Json
 import Task
 
@@ -214,11 +219,61 @@ update msg model =
 -- VIEW
 
 
+view : Model -> Html Msg
 view model =
     layout
-        []
+        (List.concat
+            [ [ width fill
+              , height fill
+              , Background.color <| rgb255 245 245 245
+              , Font.family
+                    [ Font.typeface "Helvetica Neue"
+                    , Font.typeface "Helvetica"
+                    , Font.typeface "Arial"
+                    , Font.sansSerif
+                    ]
+              , Font.size 14
+              , Font.color <| rgb255 77 77 77
+              ]
+            , fontAntialiased
+            ]
+        )
     <|
-        text "TODO"
+        -- TODO Element.Region doesn't have section, header elements
+        column
+            [ width
+                (fill
+                    |> minimum 230
+                    |> maximum 550
+                )
+            , centerX
+            ]
+            [ viewHeader
+            , viewInput model.field
+            ]
+
+
+viewHeader : Element msg
+viewHeader =
+    el
+        [ Region.heading 1
+        , height <| px 130
+        , centerX
+        , paddingEach { edges | top = 18 }
+        , Font.size 100
+        , Font.hairline
+        , Font.color <| rgba255 175 47 47 0.15
+        ]
+    <|
+        text "todos"
+
+
+viewInput : String -> Element Msg
+viewInput task =
+    column
+        [ Region.mainContent
+        ]
+        []
 
 
 
@@ -407,3 +462,25 @@ view model =
 --             , a [ href "http://todomvc.com" ] [ text "TodoMVC" ]
 --             ]
 --         ]
+
+
+edges : { top : Int, right : Int, bottom : Int, left : Int }
+edges =
+    { top = 0
+    , right = 0
+    , bottom = 0
+    , left = 0
+    }
+
+
+fontAntialiased : List (Attribute msg)
+fontAntialiased =
+    fontSmoothing "antialiased"
+
+
+fontSmoothing : String -> List (Attribute msg)
+fontSmoothing val =
+    [ htmlAttribute <| HA.style "-webkit-font-smoothing" val
+    , htmlAttribute <| HA.style "-moz-font-smoothing" val
+    , htmlAttribute <| HA.style "font-smoothing" val
+    ]
