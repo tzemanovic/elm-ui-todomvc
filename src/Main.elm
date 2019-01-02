@@ -17,10 +17,13 @@ import Browser
 import Browser.Dom as Dom
 import Element exposing (..)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input
 import Element.Region as Region
 import Html exposing (Html)
 import Html.Attributes as HA
+import Html.Events as HE
 import Json.Decode as Json
 import Task
 
@@ -240,6 +243,7 @@ view model =
         )
     <|
         -- TODO Element.Region doesn't have section, header elements
+        -- header: https://github.com/mdgriffith/elm-ui/issues/59
         column
             [ width
                 (fill
@@ -249,7 +253,27 @@ view model =
             , centerX
             ]
             [ viewHeader
-            , viewInput model.field
+            , column
+                [ width fill
+                , Background.color <| rgb255 255 255 255
+                , Border.shadow
+                    { offset = ( 0, 2 )
+                    , size = 0
+                    , blur = 4
+                    , color = rgba255 0 0 0 0.2
+                    }
+
+                -- TODO cannot compose shadows
+                -- https://github.com/mdgriffith/elm-ui/issues/51
+                , Border.shadow
+                    { offset = ( 0, 25 )
+                    , size = 0
+                    , blur = 50
+                    , color = rgba255 0 0 0 0.1
+                    }
+                ]
+                [ viewInput model.field
+                ]
             ]
 
 
@@ -270,10 +294,41 @@ viewHeader =
 
 viewInput : String -> Element Msg
 viewInput task =
-    column
-        [ Region.mainContent
-        ]
-        []
+    Input.text
+        (List.concat
+            -- TODO Element doesn't have pseudo, but we can style the placeholder
+            [ [ onEnter Add
+              , Font.size 24
+
+              -- TODO Element.Font doesn't have line-height, it says to use paragraph with spacing
+              , htmlAttribute <| HA.style "line-height" "1.4em"
+              , Border.width 0
+              , htmlAttribute <| HA.style "outline" "none"
+              , paddingEach { top = 16, right = 16, bottom = 16, left = 60 }
+              , Background.color <| rgba255 0 0 0 0.003
+              , Border.innerShadow
+                    { offset = ( 0, -2 )
+                    , size = 0
+                    , blur = 1
+                    , color = rgba255 0 0 0 0.03
+                    }
+              ]
+            , fontAntialiased
+            ]
+        )
+        { onChange = UpdateField
+        , text = task
+        , placeholder =
+            Just <|
+                Input.placeholder
+                    [ Font.italic
+                    , Font.light
+                    , Font.color <| rgba255 230 230 230 0.5
+                    ]
+                <|
+                    text "What needs to be done?"
+        , label = Input.labelAbove [] none
+        }
 
 
 
@@ -484,3 +539,16 @@ fontSmoothing val =
     , htmlAttribute <| HA.style "-moz-font-smoothing" val
     , htmlAttribute <| HA.style "font-smoothing" val
     ]
+
+
+onEnter : msg -> Attribute msg
+onEnter msg =
+    let
+        isEnter code =
+            if code == 13 then
+                Json.succeed msg
+
+            else
+                Json.fail "not ENTER"
+    in
+    htmlAttribute <| HE.on "keydown" <| Json.andThen isEnter HE.keyCode
