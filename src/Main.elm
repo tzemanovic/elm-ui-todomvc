@@ -20,6 +20,8 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Element.Keyed as Keyed
+import Element.Lazy exposing (..)
 import Element.Region as Region
 import Html exposing (Html)
 import Html.Attributes as HA
@@ -273,6 +275,7 @@ view model =
                     }
                 ]
                 [ viewInput model.field
+                , lazy2 viewEntries model.visibility model.entries
                 ]
             ]
 
@@ -296,15 +299,11 @@ viewInput : String -> Element Msg
 viewInput task =
     Input.text
         (List.concat
-            -- TODO Element doesn't have pseudo, but we can style the placeholder
             [ [ onEnter Add
               , Font.size 24
-
-              -- TODO Element.Font doesn't have line-height, it says to use paragraph with spacing
-              , htmlAttribute <| HA.style "line-height" "1.4em"
               , Border.width 0
               , htmlAttribute <| HA.style "outline" "none"
-              , paddingEach { top = 16, right = 16, bottom = 16, left = 60 }
+              , paddingEach { top = 20, right = 16, bottom = 20, left = 60 }
               , Background.color <| rgba255 0 0 0 0.003
               , Border.innerShadow
                     { offset = ( 0, -2 )
@@ -327,8 +326,116 @@ viewInput task =
                     ]
                 <|
                     text "What needs to be done?"
-        , label = Input.labelAbove [] none
+        , label = Input.labelHidden "What needs to be done?"
         }
+
+
+
+-- -- VIEW ALL ENTRIES
+
+
+viewEntries : String -> List Entry -> Element Msg
+viewEntries visibility entries =
+    let
+        isVisible todo =
+            case visibility of
+                "Completed" ->
+                    todo.completed
+
+                "Active" ->
+                    not todo.completed
+
+                _ ->
+                    True
+
+        allCompleted =
+            List.all .completed entries
+    in
+    column
+        [ transparent <| List.isEmpty entries
+        , Border.widthEach { edges | top = 1 }
+        , Border.solid
+        , Border.color <| rgb255 230 230 230
+        , above <|
+            Input.checkbox
+                []
+                { onChange = always <| CheckAll <| not allCompleted
+                , icon =
+                    \checked ->
+                        el
+                            [ width <| px 60
+                            , height <| px 34
+                            , moveUp 18
+                            , Border.width 0
+                            , rotate <| pi / 2
+                            , Font.size 22
+                            , Font.center
+                            , Font.color <|
+                                if checked then
+                                    rgb255 155 155 155
+
+                                else
+                                    rgb255 230 230 230
+                            , paddingEach
+                                { top = 10
+                                , right = 27
+                                , bottom = 10
+                                , left = 27
+                                }
+                            ]
+                            (text "❯")
+                , checked = allCompleted
+                , label = Input.labelHidden "Mark all as complete"
+                }
+        ]
+        [ Keyed.column [] <|
+            List.map viewKeyedEntry (List.filter isVisible entries)
+        ]
+
+
+
+-- VIEW INDIVIDUAL ENTRIES
+
+
+viewKeyedEntry : Entry -> ( String, Element Msg )
+viewKeyedEntry todo =
+    ( String.fromInt todo.id, lazy viewEntry todo )
+
+
+viewEntry : Entry -> Element Msg
+viewEntry todo =
+    -- li
+    --     [ classList [ ( "completed", todo.completed ), ( "editing", todo.editing ) ] ]
+    --     [ div
+    --         [ class "view" ]
+    --         [ input
+    --             [ class "toggle"
+    --             , type_ "checkbox"
+    --             , checked todo.completed
+    --             , onClick (Check todo.id (not todo.completed))
+    --             ]
+    --             []
+    --         , label
+    --             [ onDoubleClick (EditingEntry todo.id True) ]
+    --             [ text todo.description ]
+    --         , button
+    --             [ class "destroy"
+    --             , onClick (Delete todo.id)
+    --             ]
+    --             []
+    --         ]
+    --     , input
+    --         [ class "edit"
+    --         , value todo.description
+    --         , name "title"
+    --         , id ("todo-" ++ String.fromInt todo.id)
+    --         , onInput (UpdateEntry todo.id)
+    --         , onBlur (EditingEntry todo.id False)
+    --         , onEnter (EditingEntry todo.id False)
+    --         ]
+    --         []
+    --     ]
+    el [] <| text todo.description
 
 
 
