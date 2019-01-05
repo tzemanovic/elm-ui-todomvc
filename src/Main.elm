@@ -258,21 +258,24 @@ view model =
             , column
                 [ width fill
                 , Background.color <| rgb255 255 255 255
-                , Border.shadow
-                    { offset = ( 0, 2 )
-                    , size = 0
-                    , blur = 4
-                    , color = rgba255 0 0 0 0.2
-                    }
 
                 -- TODO cannot compose shadows
                 -- https://github.com/mdgriffith/elm-ui/issues/51
-                , Border.shadow
-                    { offset = ( 0, 25 )
-                    , size = 0
-                    , blur = 50
-                    , color = rgba255 0 0 0 0.1
-                    }
+                -- , Border.shadow
+                --     { offset = ( 0, 2 )
+                --     , size = 0
+                --     , blur = 4
+                --     , color = rgba255 0 0 0 0.2
+                --     }
+                -- , Border.shadow
+                --     { offset = ( 0, 25 )
+                --     , size = 0
+                --     , blur = 50
+                --     , color = rgba255 0 0 0 0.1
+                --     }
+                , htmlAttribute <|
+                    HA.style "box-shadow"
+                        "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1)"
                 ]
                 [ viewInput model.field
                 , lazy2 viewEntries model.visibility model.entries
