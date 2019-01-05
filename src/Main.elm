@@ -18,6 +18,7 @@ import Browser.Dom as Dom
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Element.Keyed as Keyed
@@ -303,19 +304,9 @@ viewInput task =
     Input.text
         (List.concat
             [ [ onEnter Add
-              , Font.size 24
-              , Border.width 0
-              , htmlAttribute <| HA.style "outline" "none"
               , paddingEach { top = 20, right = 16, bottom = 20, left = 60 }
-              , Background.color <| rgba255 0 0 0 0.003
-              , Border.innerShadow
-                    { offset = ( 0, -2 )
-                    , size = 0
-                    , blur = 1
-                    , color = rgba255 0 0 0 0.03
-                    }
               ]
-            , fontAntialiased
+            , todoInputStyles
             ]
         )
         { onChange = UpdateField
@@ -355,7 +346,8 @@ viewEntries visibility entries =
             List.all .completed entries
     in
     column
-        [ transparent <| List.isEmpty entries
+        [ width fill
+        , transparent <| List.isEmpty entries
         , Border.widthEach { edges | top = 1 }
         , Border.solid
         , Border.color <| rgb255 230 230 230
@@ -391,7 +383,11 @@ viewEntries visibility entries =
                 , label = Input.labelHidden "Mark all as complete"
                 }
         ]
-        [ Keyed.column [] <|
+        [ Keyed.column
+            [ spacingXY 0 1
+            , Background.color <| rgb255 237 237 237
+            ]
+          <|
             List.map viewKeyedEntry (List.filter isVisible entries)
         ]
 
@@ -407,38 +403,128 @@ viewKeyedEntry todo =
 
 viewEntry : Entry -> Element Msg
 viewEntry todo =
-    -- li
-    --     [ classList [ ( "completed", todo.completed ), ( "editing", todo.editing ) ] ]
-    --     [ div
-    --         [ class "view" ]
-    --         [ input
-    --             [ class "toggle"
-    --             , type_ "checkbox"
-    --             , checked todo.completed
-    --             , onClick (Check todo.id (not todo.completed))
-    --             ]
-    --             []
-    --         , label
-    --             [ onDoubleClick (EditingEntry todo.id True) ]
-    --             [ text todo.description ]
-    --         , button
-    --             [ class "destroy"
-    --             , onClick (Delete todo.id)
-    --             ]
-    --             []
-    --         ]
-    --     , input
-    --         [ class "edit"
-    --         , value todo.description
-    --         , name "title"
-    --         , id ("todo-" ++ String.fromInt todo.id)
-    --         , onInput (UpdateEntry todo.id)
-    --         , onBlur (EditingEntry todo.id False)
-    --         , onEnter (EditingEntry todo.id False)
-    --         ]
-    --         []
-    --     ]
-    el [] <| text todo.description
+    row
+        [ width fill
+        , Background.color <| rgb255 255 255 255
+        , spacingXY 5 0
+        ]
+        (if todo.editing then
+            [ Input.text
+                (List.concat
+                    [ [ onEnter <| EditingEntry todo.id False
+                      , Events.onLoseFocus <| EditingEntry todo.id False
+                      , htmlAttribute <| HA.id <| "todo-" ++ String.fromInt todo.id
+                      , width <| px 506
+                      , alignRight
+                      , paddingEach { top = 17, right = 17, bottom = 16, left = 17 }
+                      ]
+                    , todoInputStyles
+                    ]
+                )
+                { onChange = UpdateEntry todo.id
+                , text = todo.description
+                , placeholder =
+                    Just <|
+                        Input.placeholder
+                            [ Font.italic
+                            , Font.light
+                            , Font.color <| rgba255 230 230 230 0.5
+                            ]
+                        <|
+                            text "What needs to be done?"
+                , label = Input.labelHidden "What needs to be done?"
+                }
+            ]
+
+         else
+            [ Input.checkbox
+                [ width <| px 40
+                , height <| px 40
+                , Background.image <|
+                    if todo.completed then
+                        checkCompleteSrc
+
+                    else
+                        checkIncompleteSrc
+                ]
+                { onChange = always <| Check todo.id <| not todo.completed
+                , icon = always <| el [ width fill, height fill ] none
+                , checked = todo.completed
+                , label = Input.labelHidden "Mark (in)complete"
+                }
+            , paragraph
+                (List.concat
+                    [ [ Events.onDoubleClick <| EditingEntry todo.id True
+                      , width fill
+                      , alignLeft
+                      , Font.size 24
+                      , Font.light
+                      , paddingEach
+                            { edges
+                                | top = 17
+                                , right = 60
+                                , bottom = 17
+                                , left = 15
+                            }
+                      , htmlAttribute <| HA.style "transition" "color 0.4s"
+                      , htmlAttribute <| HA.style "word-break" "break-all"
+
+                      -- TODO cannot use mouseOver as onRight is not Decoration
+                      , onRight <|
+                            column [ alignBottom ]
+                                [ Input.button
+                                    [ width <| px 40
+                                    , height <| px 40
+                                    , moveLeft <| 50
+                                    , Font.center
+                                    , Font.size 30
+                                    , Font.color <| rgb255 204 154 154
+                                    , mouseOver
+                                        [ Font.color <| rgb255 175 91 94 ]
+                                    ]
+                                    { onPress = Just <| Delete todo.id
+                                    , label =
+                                        el
+                                            [ centerX
+                                            , height <| px 35
+                                            , alignBottom
+                                            ]
+                                        <|
+                                            text "×"
+                                    }
+                                , el [ height <| px 11 ] none
+                                ]
+                      ]
+                    , if todo.completed then
+                        [ Font.strike
+                        , Font.color <| rgb255 217 217 217
+                        ]
+
+                      else
+                        []
+                    ]
+                )
+                [ text todo.description ]
+            ]
+        )
+
+
+todoInputStyles : List (Attribute msg)
+todoInputStyles =
+    List.concat
+        [ [ Font.size 24
+          , Border.width 0
+          , htmlAttribute <| HA.style "outline" "none"
+          , Background.color <| rgba255 0 0 0 0.003
+          , Border.innerShadow
+                { offset = ( 0, -2 )
+                , size = 0
+                , blur = 1
+                , color = rgba255 0 0 0 0.03
+                }
+          ]
+        , fontAntialiased
+        ]
 
 
 
@@ -662,3 +748,13 @@ onEnter msg =
                 Json.fail "not ENTER"
     in
     htmlAttribute <| HE.on "keydown" <| Json.andThen isEnter HE.keyCode
+
+
+checkIncompleteSrc : String
+checkIncompleteSrc =
+    "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23ededed%22%20stroke-width%3D%223%22/%3E%3C/svg%3E"
+
+
+checkCompleteSrc : String
+checkCompleteSrc =
+    "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23bddad5%22%20stroke-width%3D%223%22/%3E%3Cpath%20fill%3D%22%235dc2af%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22/%3E%3C/svg%3E"
