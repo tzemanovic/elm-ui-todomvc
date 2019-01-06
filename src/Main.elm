@@ -305,6 +305,15 @@ viewInput task =
         (List.concat
             [ [ onEnter Add
               , paddingEach { top = 20, right = 16, bottom = 20, left = 60 }
+              , Border.width 0
+              , focused
+                    [ Border.innerShadow
+                        { offset = ( 0, -2 )
+                        , size = 0
+                        , blur = 1
+                        , color = rgba255 0 0 0 0.03
+                        }
+                    ]
               ]
             , todoInputStyles
             ]
@@ -353,7 +362,7 @@ viewEntries visibility entries =
         , Border.color <| rgb255 230 230 230
         , above <|
             Input.checkbox
-                []
+                [ width <| px 60, height fill ]
                 { onChange = always <| CheckAll <| not allCompleted
                 , icon =
                     \checked ->
@@ -417,6 +426,18 @@ viewEntry todo =
                       , width <| px 506
                       , alignRight
                       , paddingEach { top = 17, right = 17, bottom = 16, left = 17 }
+                      , Border.width 1
+                      , Border.solid
+                      , Border.color <| rgba255 0 0 0 0
+                      , focused
+                            [ Border.color <| rgb255 153 153 153
+                            , Border.innerShadow
+                                { offset = ( 0, -1 )
+                                , size = 0
+                                , blur = 5
+                                , color = rgba255 0 0 0 0.2
+                                }
+                            ]
                       ]
                     , todoInputStyles
                     ]
@@ -513,8 +534,7 @@ todoInputStyles : List (Attribute msg)
 todoInputStyles =
     List.concat
         [ [ Font.size 24
-          , Border.width 0
-          , htmlAttribute <| HA.style "outline" "none"
+          , Border.rounded 0
           , Background.color <| rgba255 0 0 0 0.003
           , Border.innerShadow
                 { offset = ( 0, -2 )
