@@ -412,53 +412,9 @@ viewKeyedEntry todo =
 
 viewEntry : Entry -> Element Msg
 viewEntry todo =
-    row
-        [ width fill
-        , Background.color <| rgb255 255 255 255
-        , spacingXY 5 0
-        ]
-        (if todo.editing then
-            [ Input.text
-                (List.concat
-                    [ [ onEnter <| EditingEntry todo.id False
-                      , Events.onLoseFocus <| EditingEntry todo.id False
-                      , htmlAttribute <| HA.id <| "todo-" ++ String.fromInt todo.id
-                      , width <| px 506
-                      , alignRight
-                      , paddingEach { top = 17, right = 17, bottom = 16, left = 17 }
-                      , Border.width 1
-                      , Border.solid
-                      , Border.color <| rgba255 0 0 0 0
-                      , focused
-                            [ Border.color <| rgb255 153 153 153
-                            , Border.innerShadow
-                                { offset = ( 0, -1 )
-                                , size = 0
-                                , blur = 5
-                                , color = rgba255 0 0 0 0.2
-                                }
-                            ]
-                      ]
-                    , todoInputStyles
-                    ]
-                )
-                { onChange = UpdateEntry todo.id
-                , text = todo.description
-                , placeholder =
-                    Just <|
-                        Input.placeholder
-                            [ Font.italic
-                            , Font.light
-                            , Font.color <| rgba255 230 230 230 0.5
-                            ]
-                        <|
-                            text "What needs to be done?"
-                , label = Input.labelHidden "What needs to be done?"
-                }
-            ]
-
-         else
-            [ Input.checkbox
+    let
+        viewCompleteCheckbox =
+            Input.checkbox
                 [ width <| px 40
                 , height <| px 40
                 , Background.image <|
@@ -473,7 +429,9 @@ viewEntry todo =
                 , checked = todo.completed
                 , label = Input.labelHidden "Mark (in)complete"
                 }
-            , paragraph
+
+        viewReadonly =
+            paragraph
                 (List.concat
                     [ [ Events.onDoubleClick <| EditingEntry todo.id True
                       , width fill
@@ -526,6 +484,62 @@ viewEntry todo =
                     ]
                 )
                 [ text todo.description ]
+
+        viewEditing =
+            Input.text
+                (List.concat
+                    [ [ onEnter <| EditingEntry todo.id False
+                      , Events.onLoseFocus <| EditingEntry todo.id False
+                      , htmlAttribute <| HA.id <| "todo-" ++ String.fromInt todo.id
+                      , width <| px 506
+                      , alignRight
+                      , paddingEach
+                            { top = 17
+                            , right = 17
+                            , bottom = 16
+                            , left = 17
+                            }
+                      , Border.width 1
+                      , Border.solid
+                      , Border.color <| rgba255 0 0 0 0
+                      , focused
+                            [ Border.color <| rgb255 153 153 153
+                            , Border.innerShadow
+                                { offset = ( 0, -1 )
+                                , size = 0
+                                , blur = 5
+                                , color = rgba255 0 0 0 0.2
+                                }
+                            ]
+                      ]
+                    , todoInputStyles
+                    ]
+                )
+                { onChange = UpdateEntry todo.id
+                , text = todo.description
+                , placeholder =
+                    Just <|
+                        Input.placeholder
+                            [ Font.italic
+                            , Font.light
+                            , Font.color <| rgba255 230 230 230 0.5
+                            ]
+                        <|
+                            text "What needs to be done?"
+                , label = Input.labelHidden "What needs to be done?"
+                }
+    in
+    row
+        [ width fill
+        , Background.color <| rgb255 255 255 255
+        , spacingXY 5 0
+        ]
+        (if todo.editing then
+            [ viewEditing ]
+
+         else
+            [ viewCompleteCheckbox
+            , viewReadonly
             ]
         )
 
