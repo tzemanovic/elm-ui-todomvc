@@ -230,7 +230,6 @@ view model =
     layout
         (List.concat
             [ [ width fill
-              , height fill
               , Background.color <| rgb255 245 245 245
               , Font.family
                     [ Font.typeface "Helvetica Neue"
@@ -240,6 +239,7 @@ view model =
                     ]
               , Font.size 14
               , Font.color <| rgb255 77 77 77
+              , Font.light
               ]
             , fontAntialiased
             ]
