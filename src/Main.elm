@@ -27,7 +27,8 @@ import Element.Region as Region
 import Html exposing (Html)
 import Html.Attributes as HA
 import Html.Events as HE
-import Json.Decode as Json
+import Json.Decode as JD
+import Json.Encode as JE
 import Task
 
 
@@ -255,7 +256,13 @@ view model =
                 )
             , centerX
             ]
-            [ viewHeader
+            [ html <|
+                Html.node "style"
+                    [ HA.property "innerText" <|
+                        JE.string ".todo-entry .destroy {display: none} .todo-entry:hover .destroy {display:flex}"
+                    ]
+                    []
+            , viewHeader
             , column
                 [ width fill
                 , spacing 65
@@ -450,6 +457,7 @@ viewEntry todo =
                                 , bottom = 17
                                 , left = 15
                             }
+                      , htmlAttribute <| HA.class "todo-entry"
                       , htmlAttribute <| HA.style "transition" "color 0.4s"
                       , htmlAttribute <| HA.style "word-break" "break-all"
 
@@ -460,6 +468,7 @@ viewEntry todo =
                                     [ width <| px 40
                                     , height <| px 40
                                     , moveLeft <| 50
+                                    , htmlAttribute <| HA.class "destroy"
                                     , Font.center
                                     , Font.size 30
                                     , Font.color <| rgb255 204 154 154
@@ -740,12 +749,12 @@ onEnter msg =
     let
         isEnter code =
             if code == 13 then
-                Json.succeed msg
+                JD.succeed msg
 
             else
-                Json.fail "not ENTER"
+                JD.fail "not ENTER"
     in
-    htmlAttribute <| HE.on "keydown" <| Json.andThen isEnter HE.keyCode
+    htmlAttribute <| HE.on "keydown" <| JD.andThen isEnter HE.keyCode
 
 
 checkIncompleteSrc : String
