@@ -258,28 +258,35 @@ view model =
             [ viewHeader
             , column
                 [ width fill
-                , Background.color <| rgb255 255 255 255
-
-                -- TODO cannot compose shadows
-                -- https://github.com/mdgriffith/elm-ui/issues/51
-                -- , Border.shadow
-                --     { offset = ( 0, 2 )
-                --     , size = 0
-                --     , blur = 4
-                --     , color = rgba255 0 0 0 0.2
-                --     }
-                -- , Border.shadow
-                --     { offset = ( 0, 25 )
-                --     , size = 0
-                --     , blur = 50
-                --     , color = rgba255 0 0 0 0.1
-                --     }
-                , htmlAttribute <|
-                    HA.style "box-shadow"
-                        "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1)"
+                , spacing 65
                 ]
-                [ viewInput model.field
-                , lazy2 viewEntries model.visibility model.entries
+                [ column
+                    [ width fill
+                    , Background.color <| rgb255 255 255 255
+
+                    -- TODO cannot compose shadows
+                    -- https://github.com/mdgriffith/elm-ui/issues/51
+                    -- , Border.shadow
+                    --     { offset = ( 0, 2 )
+                    --     , size = 0
+                    --     , blur = 4
+                    --     , color = rgba255 0 0 0 0.2
+                    --     }
+                    -- , Border.shadow
+                    --     { offset = ( 0, 25 )
+                    --     , size = 0
+                    --     , blur = 50
+                    --     , color = rgba255 0 0 0 0.1
+                    --     }
+                    , htmlAttribute <|
+                        HA.style "box-shadow"
+                            "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 25px 50px 0 rgba(0, 0, 0, 0.1)"
+                    ]
+                    [ viewInput model.field
+                    , lazy2 viewEntries model.visibility model.entries
+                    , lazy2 viewControls model.visibility model.entries
+                    ]
+                , infoFooter
                 ]
             ]
 
@@ -324,7 +331,6 @@ viewInput task =
             Just <|
                 Input.placeholder
                     [ Font.italic
-                    , Font.light
                     , Font.color <| rgba255 230 230 230 0.5
                     ]
                 <|
@@ -437,7 +443,6 @@ viewEntry todo =
                       , width fill
                       , alignLeft
                       , Font.size 24
-                      , Font.light
                       , paddingEach
                             { edges
                                 | top = 17
@@ -490,7 +495,8 @@ viewEntry todo =
                 (List.concat
                     [ [ onEnter <| EditingEntry todo.id False
                       , Events.onLoseFocus <| EditingEntry todo.id False
-                      , htmlAttribute <| HA.id <| "todo-" ++ String.fromInt todo.id
+                      , htmlAttribute <|
+                            HA.id ("todo-" ++ String.fromInt todo.id)
                       , width <| px 506
                       , alignRight
                       , paddingEach
@@ -501,7 +507,7 @@ viewEntry todo =
                             }
                       , Border.width 1
                       , Border.solid
-                      , Border.color <| rgba255 0 0 0 0
+                      , Border.color <| colorTransparent
                       , focused
                             [ Border.color <| rgb255 153 153 153
                             , Border.innerShadow
@@ -521,7 +527,6 @@ viewEntry todo =
                     Just <|
                         Input.placeholder
                             [ Font.italic
-                            , Font.light
                             , Font.color <| rgba255 230 230 230 0.5
                             ]
                         <|
@@ -544,6 +549,110 @@ viewEntry todo =
         )
 
 
+
+-- VIEW CONTROLS AND FOOTER
+
+
+viewControls : String -> List Entry -> Element Msg
+viewControls visibility entries =
+    let
+        entriesCompleted =
+            List.length (List.filter .completed entries)
+
+        entriesLeft =
+            List.length entries - entriesCompleted
+
+        evenWidth =
+            el [ width fill ]
+    in
+    row
+        [ Region.footer
+        , width fill
+        , paddingXY 15 10
+        , htmlAttribute <| HA.hidden (List.isEmpty entries)
+        , Font.color <| rgb255 119 119 119
+        , Font.center
+        , Border.solid
+        , Border.widthEach { edges | top = 1 }
+        , Border.color <| rgb255 230 230 230
+        , htmlAttribute <|
+            HA.style "box-shadow"
+                "0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6, 0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6, 0 17px 2px -6px rgba(0, 0, 0, 0.2)"
+        ]
+        [ evenWidth <| lazy viewControlsCount entriesLeft
+        , evenWidth <| lazy viewControlsFilters visibility
+        , evenWidth <| lazy viewControlsClear entriesCompleted
+        ]
+
+
+viewControlsCount : Int -> Element Msg
+viewControlsCount entriesLeft =
+    let
+        item_ =
+            if entriesLeft == 1 then
+                " item"
+
+            else
+                " items"
+    in
+    el [] <|
+        text (String.fromInt entriesLeft ++ item_ ++ " left")
+
+
+viewControlsFilters : String -> Element Msg
+viewControlsFilters visibility =
+    row
+        [ spacing 10 ]
+        [ visibilitySwap "#/" "All" visibility
+        , visibilitySwap "#/active" "Active" visibility
+        , visibilitySwap "#/completed" "Completed" visibility
+        ]
+
+
+visibilitySwap : String -> String -> String -> Element Msg
+visibilitySwap uri visibility actualVisibility =
+    el
+        [ Events.onClick (ChangeVisibility visibility) ]
+    <|
+        link
+            (List.concat
+                [ [ paddingXY 7 3
+                  , Border.width 1
+                  , Border.solid
+                  , Border.rounded 3
+                  , Border.color <| colorTransparent
+                  , mouseOver [ Border.color <| rgba255 175 47 47 0.1 ]
+                  ]
+                , if visibility == actualVisibility then
+                    [ Border.color <| rgba255 175 47 47 0.2 ]
+
+                  else
+                    []
+                ]
+            )
+            { url = uri
+            , label = text visibility
+            }
+
+
+viewControlsClear : Int -> Element Msg
+viewControlsClear entriesCompleted =
+    Input.button
+        [ alignRight
+        , transparent <| entriesCompleted == 0
+        , Border.widthEach { edges | bottom = 1 }
+        , Border.color <| colorTransparent
+        , mouseOver
+            [ -- can't use Font.underline here, use bottom border instead
+              Border.color <| rgba255 119 119 119 0.5
+            ]
+        ]
+        { onPress = Just DeleteComplete
+        , label =
+            text ("Clear completed (" ++ String.fromInt entriesCompleted ++ ")")
+        }
+
+
 todoInputStyles : List (Attribute msg)
 todoInputStyles =
     List.concat
@@ -561,192 +670,47 @@ todoInputStyles =
         ]
 
 
+infoFooter : Element msg
+infoFooter =
+    column
+        [ Region.footer
+        , width fill
+        , spacing 9
+        , Font.color <| rgb255 191 191 191
+        , Font.size 10
+        , Font.center
+        ]
+        [ paragraph [] [ text "Double-click to edit a todo" ]
+        , paragraph []
+            [ text "Written by "
+            , link
+                [ Border.widthEach { edges | bottom = 1 }
+                , Border.color <| colorTransparent
+                , mouseOver
+                    [ Border.color <| rgba255 119 119 119 0.5 ]
+                ]
+                { url = "https://github.com/tzemanovic"
+                , label = text "Tomáš Zemanovič"
+                }
+            ]
+        , paragraph [ paddingEach { edges | bottom = 9 } ]
+            [ text "Part of "
+            , link
+                [ Border.widthEach { edges | bottom = 1 }
+                , Border.color <| colorTransparent
+                , mouseOver
+                    [ Border.color <| rgba255 119 119 119 0.5 ]
+                ]
+                { url = "http://todomvc.com"
+                , label = text "TodoMVC"
+                }
+            ]
+        ]
 
--- view : Model -> Html Msg
--- view model =
---     div
---         [ class "todomvc-wrapper"
---         , style "visibility" "hidden"
---         ]
---         [ section
---             [ class "todoapp" ]
---             [ lazy viewInput model.field
---             , lazy2 viewEntries model.visibility model.entries
---             , lazy2 viewControls model.visibility model.entries
---             ]
---         , infoFooter
---         ]
--- viewInput : String -> Html Msg
--- viewInput task =
---     header
---         [ class "header" ]
---         [ h1 [] [ text "todos" ]
---         , input
---             [ class "new-todo"
---             , placeholder "What needs to be done?"
---             , autofocus True
---             , value task
---             , name "newTodo"
---             , onInput UpdateField
---             , onEnter Add
---             ]
---             []
---         ]
--- onEnter : Msg -> Attribute Msg
--- onEnter msg =
---     let
---         isEnter code =
---             if code == 13 then
---                 Json.succeed msg
---             else
---                 Json.fail "not ENTER"
---     in
---         on "keydown" (Json.andThen isEnter keyCode)
--- -- VIEW ALL ENTRIES
--- viewEntries : String -> List Entry -> Html Msg
--- viewEntries visibility entries =
---     let
---         isVisible todo =
---             case visibility of
---                 "Completed" ->
---                     todo.completed
---                 "Active" ->
---                     not todo.completed
---                 _ ->
---                     True
---         allCompleted =
---             List.all .completed entries
---         cssVisibility =
---             if List.isEmpty entries then
---                 "hidden"
---             else
---                 "visible"
---     in
---         section
---             [ class "main"
---             , style "visibility" cssVisibility
---             ]
---             [ input
---                 [ class "toggle-all"
---                 , type_ "checkbox"
---                 , name "toggle"
---                 , checked allCompleted
---                 , onClick (CheckAll (not allCompleted))
---                 ]
---                 []
---             , label
---                 [ for "toggle-all" ]
---                 [ text "Mark all as complete" ]
---             , Keyed.ul [ class "todo-list" ] <|
---                 List.map viewKeyedEntry (List.filter isVisible entries)
---             ]
--- -- VIEW INDIVIDUAL ENTRIES
--- viewKeyedEntry : Entry -> ( String, Html Msg )
--- viewKeyedEntry todo =
---     ( String.fromInt todo.id, lazy viewEntry todo )
--- viewEntry : Entry -> Html Msg
--- viewEntry todo =
---     li
---         [ classList [ ( "completed", todo.completed ), ( "editing", todo.editing ) ] ]
---         [ div
---             [ class "view" ]
---             [ input
---                 [ class "toggle"
---                 , type_ "checkbox"
---                 , checked todo.completed
---                 , onClick (Check todo.id (not todo.completed))
---                 ]
---                 []
---             , label
---                 [ onDoubleClick (EditingEntry todo.id True) ]
---                 [ text todo.description ]
---             , button
---                 [ class "destroy"
---                 , onClick (Delete todo.id)
---                 ]
---                 []
---             ]
---         , input
---             [ class "edit"
---             , value todo.description
---             , name "title"
---             , id ("todo-" ++ String.fromInt todo.id)
---             , onInput (UpdateEntry todo.id)
---             , onBlur (EditingEntry todo.id False)
---             , onEnter (EditingEntry todo.id False)
---             ]
---             []
---         ]
--- -- VIEW CONTROLS AND FOOTER
--- viewControls : String -> List Entry -> Html Msg
--- viewControls visibility entries =
---     let
---         entriesCompleted =
---             List.length (List.filter .completed entries)
---         entriesLeft =
---             List.length entries - entriesCompleted
---     in
---         footer
---             [ class "footer"
---             , hidden (List.isEmpty entries)
---             ]
---             [ lazy viewControlsCount entriesLeft
---             , lazy viewControlsFilters visibility
---             , lazy viewControlsClear entriesCompleted
---             ]
--- viewControlsCount : Int -> Html Msg
--- viewControlsCount entriesLeft =
---     let
---         item_ =
---             if entriesLeft == 1 then
---                 " item"
---             else
---                 " items"
---     in
---         span
---             [ class "todo-count" ]
---             [ strong [] [ text (String.fromInt entriesLeft) ]
---             , text (item_ ++ " left")
---             ]
--- viewControlsFilters : String -> Html Msg
--- viewControlsFilters visibility =
---     ul
---         [ class "filters" ]
---         [ visibilitySwap "#/" "All" visibility
---         , text " "
---         , visibilitySwap "#/active" "Active" visibility
---         , text " "
---         , visibilitySwap "#/completed" "Completed" visibility
---         ]
--- visibilitySwap : String -> String -> String -> Html Msg
--- visibilitySwap uri visibility actualVisibility =
---     li
---         [ onClick (ChangeVisibility visibility) ]
---         [ a [ href uri, classList [ ( "selected", visibility == actualVisibility ) ] ]
---             [ text visibility ]
---         ]
--- viewControlsClear : Int -> Html Msg
--- viewControlsClear entriesCompleted =
---     button
---         [ class "clear-completed"
---         , hidden (entriesCompleted == 0)
---         , onClick DeleteComplete
---         ]
---         [ text ("Clear completed (" ++ String.fromInt entriesCompleted ++ ")")
---         ]
--- infoFooter : Html msg
--- infoFooter =
---     footer [ class "info" ]
---         [ p [] [ text "Double-click to edit a todo" ]
---         , p []
---             [ text "Written by "
---             , a [ href "https://github.com/evancz" ] [ text "Evan Czaplicki" ]
---             ]
---         , p []
---             [ text "Part of "
---             , a [ href "http://todomvc.com" ] [ text "TodoMVC" ]
---             ]
---         ]
+
+colorTransparent : Color
+colorTransparent =
+    rgba 0 0 0 0
 
 
 edges : { top : Int, right : Int, bottom : Int, left : Int }
