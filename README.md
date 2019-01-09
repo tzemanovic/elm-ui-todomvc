@@ -26,5 +26,5 @@ Then open `index.html` in your browser!
 Install [elm-live](https://github.com/wking-io/elm-live) and run:
 
 ```bash
-elm-live src/Main.elm --open -- --output=elm.js
+elm-live src/Main.elm --open -- --output=elm.min.js
 ```
