@@ -9,7 +9,9 @@ This is a fork of the original [TodoMVC][upstream-TodoMVC] that instead of [elm/
 There also is a port handler set up in `index.html` to store the Elm application's state in `localStorage` on every update.
 
 
-## Build Instructions
+## Without Nix
+
+### Build Instructions
 
 Run the following command from the root of this project to build optimized output and compress using [uglifyjs](https://www.npmjs.com/package/uglify-js):
 
@@ -21,10 +23,26 @@ uglifyjs elm.js --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A
 Then open `index.html` in your browser!
 
 
-## Hacking
+### Hacking
 
 Install [elm-live](https://github.com/wking-io/elm-live) and run:
 
 ```bash
-elm-live src/Main.elm --open -- --output=elm.js
+elm-live src/Main.elm --open -- --output=elm.min.js
 ```
+
+This will open the page with live reload in your browser.
+
+
+## With Nix
+
+Install [nix](https://nixos.org/nix/).
+
+### Build Instructions
+
+Run `nix-build`, then open `result/index.html` in your browser!
+
+
+## Hacking
+
+Run `nix-env`, this will open the page with live reload in your browser.
