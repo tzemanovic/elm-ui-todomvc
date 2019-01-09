@@ -230,8 +230,7 @@ view : Model -> Html Msg
 view model =
     layout
         (List.concat
-            [ [ width fill
-              , Background.color <| rgb255 245 245 245
+            [ [ Background.color <| rgb255 245 245 245
               , Font.family
                     [ Font.typeface "Helvetica Neue"
                     , Font.typeface "Helvetica"
