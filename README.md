@@ -11,10 +11,11 @@ There also is a port handler set up in `index.html` to store the Elm application
 
 ## Build Instructions
 
-Run the following command from the root of this project:
+Run the following command from the root of this project to build optimized output and compress using [uglifyjs](https://www.npmjs.com/package/uglify-js):
 
 ```bash
-elm make src/Main.elm --output=elm.js
+elm make src/Main.elm --optimize --output=elm.js
+uglifyjs elm.js --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output=elm.min.js
 ```
 
 Then open `index.html` in your browser!
